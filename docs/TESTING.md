@@ -25,3 +25,12 @@ Run locally: `./mvnw clean verify` (tests use in-memory H2 + `src/test/resources
 | 18 | loginPageIsPublic / unknownPathWithoutTokenIs401NotPublic | 200 / 401 | — | NOT RUN |
 | 19 | Frontend: login → profile → logout (manual, browser) | profile shown; logout clears token and returns to /login | — | NOT TESTED |
 | 20 | Manual: MySQL schema created by JPA, `users.password` is BCrypt | yes | — | NOT TESTED |
+
+## Milestone 2 (Nimbus) — added/changed tests (all NOT RUN)
+| # | Test | Expected | Status |
+|---|---|---|---|
+| 21 | generatedTokenHasThreePartsHs256AndClaims | 3 parts, alg HS256, typ JWT, sub, exp, roles=[ROLE_USER] | NOT RUN |
+| 22 | unsupportedAlgorithmHs512Is401 | 401 "algorithm" | NOT RUN |
+| 23 | algNoneTokenIs401 | 401 | NOT RUN |
+| 12 | wrongSignatureIs401 (now forged with Nimbus) | 401 "signature" | NOT RUN |
+| 6 | tokenExpiryMatchesConfiguration (uses `getIssueTime`) | exp-iat == configured (±1s) | NOT RUN |

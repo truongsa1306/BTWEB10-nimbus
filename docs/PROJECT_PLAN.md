@@ -7,7 +7,7 @@ PDF's discrepancies rather than copying them.
 
 ## Technology
 Java 17 (pom) · Spring Boot 4.1.1 · Spring Security · Spring Data JPA (Hibernate) · MySQL (runtime) · H2 (tests only) ·
-JJWT 0.12.6 (api/impl/jackson) · Lombok · Thymeleaf (HTML shells) · vanilla JS frontend.
+Nimbus JOSE + JWT (`com.nimbusds:nimbus-jose-jwt`, version managed by Boot; replaced JJWT) · Lombok · Thymeleaf (HTML shells) · vanilla JS frontend.
 
 ## Modules (package `vn.iotstar.btweb10`)
 `entity` User · `models` DTOs · `repository` UserRepository · `services` UserService / AuthenticationService / JwtService ·

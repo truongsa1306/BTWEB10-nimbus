@@ -1,7 +1,11 @@
 package vn.iotstar.btweb10;
 
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.security.Keys;
+import com.nimbusds.jose.JOSEException;
+import com.nimbusds.jose.JWSAlgorithm;
+import com.nimbusds.jose.JWSHeader;
+import com.nimbusds.jose.crypto.MACSigner;
+import com.nimbusds.jwt.JWTClaimsSet;
+import com.nimbusds.jwt.SignedJWT;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -100,7 +104,7 @@ class AuthFlowIntegrationTests {
         signup("e@x.com", "secret1");
         String token = login("e@x.com", "secret1");
         long life = jwtService.extractExpiration(token).getTime()
-                - jwtService.extractClaim(token, c -> c.getIssuedAt()).getTime();
+                - jwtService.extractClaim(token, c -> c.getIssueTime()).getTime();
         // JWT dates have 1s resolution
         assertTrue(Math.abs(life - jwtService.getExpirationTime()) <= 1000, "life=" + life);
     }
@@ -152,16 +156,56 @@ class AuthFlowIntegrationTests {
                 .andExpect(content().string(not(containsString("password"))));
     }
 
+    private static String forge(JWSAlgorithm alg, byte[] key) throws JOSEException {
+        JWTClaimsSet claims = new JWTClaimsSet.Builder().subject("s@x.com")
+                .issueTime(new Date()).expirationTime(new Date(System.currentTimeMillis() + 60_000)).build();
+        SignedJWT jwt = new SignedJWT(new JWSHeader(alg), claims);
+        jwt.sign(new MACSigner(key));
+        return jwt.serialize();
+    }
+
     @Test
     void wrongSignatureIs401() throws Exception {
         signup("s@x.com", "secret1");
-        byte[] otherKey = "0123456789abcdef0123456789abcdef".getBytes(StandardCharsets.UTF_8);
-        String forged = Jwts.builder().subject("s@x.com")
-                .issuedAt(new Date()).expiration(new Date(System.currentTimeMillis() + 60_000))
-                .signWith(Keys.hmacShaKeyFor(otherKey)).compact();
+        String forged = forge(JWSAlgorithm.HS256, "0123456789abcdef0123456789abcdef".getBytes(StandardCharsets.UTF_8));
         mvc.perform(get("/users/me").header("Authorization", "Bearer " + forged))
                 .andExpect(status().isUnauthorized())
                 .andExpect(content().string(containsString("signature")));
+    }
+
+    @Test
+    void unsupportedAlgorithmHs512Is401() throws Exception {
+        signup("s@x.com", "secret1");
+        // HS512 needs a >= 64 byte key to sign; the point is that the server rejects alg != HS256
+        String forged = forge(JWSAlgorithm.HS512,
+                "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef".getBytes(StandardCharsets.UTF_8));
+        mvc.perform(get("/users/me").header("Authorization", "Bearer " + forged))
+                .andExpect(status().isUnauthorized())
+                .andExpect(content().string(containsString("algorithm")));
+    }
+
+    @Test
+    void algNoneTokenIs401() throws Exception {
+        signup("s@x.com", "secret1");
+        java.util.Base64.Encoder enc = java.util.Base64.getUrlEncoder().withoutPadding();
+        String header = enc.encodeToString("{\"alg\":\"none\"}".getBytes(StandardCharsets.UTF_8));
+        String payload = enc.encodeToString(("{\"sub\":\"s@x.com\",\"exp\":"
+                + (System.currentTimeMillis() / 1000 + 600) + "}").getBytes(StandardCharsets.UTF_8));
+        mvc.perform(get("/users/me").header("Authorization", "Bearer " + header + "." + payload + "."))
+                .andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void generatedTokenHasThreePartsHs256AndClaims() throws Exception {
+        signup("g@x.com", "secret1");
+        String token = login("g@x.com", "secret1");
+        assertEquals(3, token.split("\\.").length);
+        SignedJWT jwt = SignedJWT.parse(token);
+        assertEquals(JWSAlgorithm.HS256, jwt.getHeader().getAlgorithm());
+        assertEquals("JWT", jwt.getHeader().getType().getType());
+        assertEquals("g@x.com", jwt.getJWTClaimsSet().getSubject());
+        assertTrue(jwt.getJWTClaimsSet().getExpirationTime() != null);
+        assertEquals(java.util.List.of("ROLE_USER"), jwt.getJWTClaimsSet().getStringListClaim("roles"));
     }
 
     @Test

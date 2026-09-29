@@ -13,4 +13,6 @@ Error body (all errors): `{"timestamp","status","error","message","path"}`.
 
 `UserResponse` = `{id, fullName, email, images, role, createdAt, updatedAt}` — never contains password.
 
+401 for JWT problems: malformed, invalid signature, expired, unsupported algorithm (alg != HS256 / none), missing claims. Messages are generic (no token content).
+
 Example: `curl -H "Authorization: Bearer $TOKEN" http://localhost:8080/users/me`

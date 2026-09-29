@@ -6,7 +6,7 @@ Status: TODO / IN_PROGRESS / DONE / BLOCKED
 |---|---|---|---|---|
 | 1 | Scan project (blank Initializr skeleton, Boot 4.1.1) | DONE | — | n/a |
 | 2-3 | PDF→project mapping + discrepancy list | DONE | HANDOFF.md (section Important Decisions) | n/a |
-| 4.1 | pom.xml deps (security, jpa, thymeleaf, jjwt, test deps) | DONE | pom.xml | BLOCKED (no Maven) |
+| 4.1 | pom.xml deps (security, jpa, thymeleaf, test deps) | DONE | pom.xml | BLOCKED (no Maven) |
 | 4.1 | application.properties from env vars, `.env.example`, `.gitignore` | DONE | application.properties, .env.example, .gitignore | BLOCKED |
 | 4.2 | User entity (UserDetails, ROLE_USER, nullable images) | DONE | entity/User.java | BLOCKED |
 | 4.3 | Models + validation + UserResponse (no password) | DONE | models/* | BLOCKED |
@@ -22,3 +22,7 @@ Status: TODO / IN_PROGRESS / DONE / BLOCKED
 | 9 | Build + run tests | BLOCKED | — | sandbox blocks repo.maven.apache.org; no mvn/MySQL |
 | 7 | Docs + CONTINUE_PROMPT | DONE | docs/* | n/a |
 | 9 | **Run `./mvnw clean verify` locally and fix compile/API issues** | TODO | — | — |
+| M2 | **Replace JJWT with Nimbus JOSE + JWT** (pom, JwtService, InvalidJwtException, GlobalExceptionHandler, tests) | DONE (code) | pom.xml, services/JwtService, exception/InvalidJwtException, exception/GlobalExceptionHandler, AuthFlowIntegrationTests | NOT RUN (no Maven, network disabled) |
+| M2 | Tests added: alg HS512 → 401, alg none → 401, token structure (3 parts, HS256, typ JWT, sub, exp, roles) | DONE (written) | AuthFlowIntegrationTests | NOT RUN |
+| M2 | docs/TECHNOLOGY_DECISIONS.md + doc updates | DONE | docs/* | n/a |
+| M2 | **`./mvnw clean verify` + `./mvnw dependency:tree`** | TODO | — | — |

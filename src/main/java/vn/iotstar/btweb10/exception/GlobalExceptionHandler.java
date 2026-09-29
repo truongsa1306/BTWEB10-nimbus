@@ -1,9 +1,5 @@
 package vn.iotstar.btweb10.exception;
 
-import io.jsonwebtoken.ExpiredJwtException;
-import io.jsonwebtoken.JwtException;
-import io.jsonwebtoken.MalformedJwtException;
-import io.jsonwebtoken.security.SignatureException;
 import jakarta.servlet.http.HttpServletRequest;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -59,24 +55,17 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         return build(HttpStatus.FORBIDDEN, "You are not authorized to access this resource", req);
     }
 
-    @ExceptionHandler(SignatureException.class)
-    public ResponseEntity<ApiError> handleSignature(SignatureException ex, HttpServletRequest req) {
-        return build(HttpStatus.UNAUTHORIZED, "The JWT signature is invalid", req);
-    }
-
-    @ExceptionHandler(ExpiredJwtException.class)
-    public ResponseEntity<ApiError> handleExpired(ExpiredJwtException ex, HttpServletRequest req) {
-        return build(HttpStatus.UNAUTHORIZED, "The JWT token has expired", req);
-    }
-
-    @ExceptionHandler(MalformedJwtException.class)
-    public ResponseEntity<ApiError> handleMalformed(MalformedJwtException ex, HttpServletRequest req) {
-        return build(HttpStatus.UNAUTHORIZED, "The JWT token is malformed", req);
-    }
-
-    @ExceptionHandler(JwtException.class)
-    public ResponseEntity<ApiError> handleJwt(JwtException ex, HttpServletRequest req) {
-        return build(HttpStatus.UNAUTHORIZED, "The JWT token is invalid", req);
+    @ExceptionHandler(InvalidJwtException.class)
+    public ResponseEntity<ApiError> handleJwt(InvalidJwtException ex, HttpServletRequest req) {
+        log.debug("Rejected JWT on {}: {}", req.getRequestURI(), ex.getReason());
+        String message = switch (ex.getReason()) {
+            case INVALID_SIGNATURE -> "The JWT signature is invalid";
+            case EXPIRED -> "The JWT token has expired";
+            case MALFORMED -> "The JWT token is malformed";
+            case UNSUPPORTED_ALGORITHM -> "The JWT algorithm is not supported";
+            case INVALID_CLAIMS -> "The JWT token is invalid";
+        };
+        return build(HttpStatus.UNAUTHORIZED, message, req);
     }
 
     @ExceptionHandler(EmailAlreadyExistsException.class)
